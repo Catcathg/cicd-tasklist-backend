@@ -131,4 +131,4 @@ dist
 # Build folder
 dist/
 
-.scannerwork/
+.scannerwork/prisma/test.db
