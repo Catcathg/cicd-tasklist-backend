@@ -70,8 +70,9 @@ pipeline {
         stage('Trivy scan') {
             steps {
                 sh """
-                    trivy image --exit-code 0 --severity HIGH,CRITICAL \
-                        --format table -o trivy-report.txt ${IMAGE_NAME}:${IMAGE_TAG}
+                    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "\$(pwd)":/output \
+                        aquasec/trivy:latest image --exit-code 0 --severity HIGH,CRITICAL \
+                        --format table -o /output/trivy-report.txt ${IMAGE_NAME}:${IMAGE_TAG}
                 """
                 archiveArtifacts artifacts: 'trivy-report.txt', allowEmptyArchive: true
             }
@@ -80,7 +81,8 @@ pipeline {
         stage('Generate SBOM (SPDX)') {
             steps {
                 sh """
-                    syft ${IMAGE_NAME}:${IMAGE_TAG} -o spdx-json > sbom-spdx.json
+                    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+                        anchore/syft:latest ${IMAGE_NAME}:${IMAGE_TAG} -o spdx-json > sbom-spdx.json
                 """
                 archiveArtifacts artifacts: 'sbom-spdx.json', allowEmptyArchive: true
             }
